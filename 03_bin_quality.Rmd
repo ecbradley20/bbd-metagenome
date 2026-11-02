@@ -1,6 +1,6 @@
 ---
 title: "BBD Metagenome: Bin Quality"
-author: "Your Name"
+author: "Everett Craig Bradley"
 date: "`r Sys.Date()`"
 output:
   github_document:
