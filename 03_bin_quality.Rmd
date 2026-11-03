@@ -55,5 +55,26 @@ Once the code was saved, I pasted the following code into the terminal to submit
 sbatch run_checkm_bbd.sh
 ```
 
+It took quite a while for the servers to get to my request, so the following morning I ran this code to check my results.
+```{bash}
+head checkm_results_bbd.txt 
+```
+
+Finding no results, I checked in with my instructor. As it should happen, the dummy file (ID xx) was preventing my request from being completed. Going into the bins_bbd folder through the files pane in R studio, I manually deleted this blip and resubmitted my request via the code line two blocks up. I ran the following code to stay updated on its progress
+```{bash}
+tail -f slurm-521.out
+```
+
+Once I got the "finished checkm..." message, I ran the following line in the Terminal to view my results.
+```{bash}
+head checkm_results_bbd.txt 
+```
+
+Several parameters were listed, completeness, contamination, and heterogeneity. We can use awk to filter our bins to those with more than 15% completeness, print to specify that we only want to show the ids, and "> [filename]" to output this filtered list as its own file. The code containing these three functions in a single line is as follows.
+```{bash}
+cat checkm_results_bbd.txt | awk '$13>15{print $1}' > bbd_topbins.txt
+```
+
+Having thus created a file, I was ready to move on to the next step, taxonomic classification.
 
 Completeness and contamination of each bin, estimated with CheckM, and selection of the most complete bins for further analysis. Commands for this step were run in `checkm/`.
