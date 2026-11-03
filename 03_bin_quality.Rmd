@@ -17,9 +17,43 @@ knitr::opts_hooks$set(engine = function(options) {
 })
 ```
 
-<!--
-Explain what this step does and why, and copy each command you ran into a
-bash chunk. R chunks run from the top of the repository.
--->
+Once again, I started by navigating to the proper directory. I made my bins, so it was time to check their quality. Where better to check 'em than in CheckM?
+```{bash}
+cd ~/bbd-metagenome/checkm
+```
+
+For reasons that still don't quite make sense to me, metbat often neglects to bin the longest contig. Because of this, I had to add it in manually. The following code lists out the contigs by lengths. With this data set, I found that the longest contig was contig_138.
+```{bash}
+cat ../flye/bbd/assembly.fasta | bioawk -c fastx '{print length($seq),$name}' | sort -n
+```
+
+Now that I identified contig_138, I used samtools to save it in a bin of its own alongside its siblings, and then copied that whole folder into the checkm folder.
+```{bash}
+samtools faidx ../flye/bbd/assembly.fasta contig_138 > ..
+/metabat/bins_bbd/contig_138.fa
+cp ../metabat/bins_bbd/*.fa bins_bbd/
+```
+
+I then made a shell script saved as run_checkm_bbd.sh in the checkm folder. This shell contains a slurm script with the following code.
+```{bash}
+#!/bin/bash
+#SBATCH --time=60
+#SBATCH --ntasks=6 --mem=40gb
+
+echo "Starting checkm in $(pwd) at $(date)"
+
+shopt -s expand_aliases
+alias checkm='apptainer run -B /pvol/:/pvol /pvol/data/sif/checkm.sif checkm'
+
+checkm lineage_wf bins_bbd out -t 6 -x fa -f checkm_results_bbd.txt
+
+echo "Finished checkm in $(pwd) at $(date)"
+```
+
+Once the code was saved, I pasted the following code into the terminal to submit the script.
+```{bash}
+sbatch run_checkm_bbd.sh
+```
+
 
 Completeness and contamination of each bin, estimated with CheckM, and selection of the most complete bins for further analysis. Commands for this step were run in `checkm/`.
