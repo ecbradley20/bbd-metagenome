@@ -17,9 +17,12 @@ knitr::opts_hooks$set(engine = function(options) {
 })
 ```
 
-<!--
-Explain what this step does and why, and copy each command you ran into a
-bash chunk. R chunks run from the top of the repository.
--->
+In this step, I navigated to the flye folder, and then made a link to the black band disease genomic data that I'll be working with.
+```{bash}
+cd ~/bbd-metagenome/flye
+ln -s /pvol/data/metagenome_assembly/bbd_0.1.fastq.gz .
+```
+
+
 
 Assembly of the BBD nanopore reads with Flye. Commands for this step were run in `flye/`.
