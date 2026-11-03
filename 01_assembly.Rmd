@@ -19,10 +19,31 @@ knitr::opts_hooks$set(engine = function(options) {
 
 In this step, I navigated to the flye folder, and then made a link to the black band disease genomic data that I'll be working with.
 ```{bash}
-cd ~/bbd-metagenome/flye
+jd180553@rstudio26:~/bbd-metagenome/flye$ cd ~/bbd-metagenome/flye
 ln -s /pvol/data/metagenome_assembly/bbd_0.1.fastq.gz .
 ```
 
+Then, I created a shell scrip called "run_flye_bbd.sh" with the following code
+```{bash}
+#!/bin/bash
+#SBATCH --time=720
+#SBATCH --ntasks=12 --mem=20gb
 
+echo "Starting flye bbd in $(pwd) at $(date)"
+
+flye --nano-hq bbd_0.1.fastq.gz --threads 12 --out-dir bbd --meta
+
+echo "Finished flye bbd in $(pwd) at $(date)"
+```
+
+In this step, I submitted the job set up in my shell script.
+```{bash}
+jd180553@rstudio26:~/bbd-metagenome/flye$ sbatch run_flye_bbd.sh
+```
+
+That job took nearly an hour to complete, I know this because I ran the following code, which details the job ID, its state (timeout, out_of_memory, or in this case complete), and how much time elapsed while running the program.
+```{bash}
+jd180553@rstudio26:~/bbd-metagenome/flye$ sacct -j 447 --format=JobID,State,MaxRSS,Elapsed
+```
 
 Assembly of the BBD nanopore reads with Flye. Commands for this step were run in `flye/`.
