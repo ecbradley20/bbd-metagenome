@@ -17,9 +17,21 @@ knitr::opts_hooks$set(engine = function(options) {
 })
 ```
 
-<!--
-Explain what this step does and why, and copy each command you ran into a
-bash chunk. R chunks run from the top of the repository.
--->
+First, I navigated to metabat.
+```{bash}
+cd ~/bbd-metagenome/metabat
+```
+
+Within metabat, I extracted the depth information - the number of reads- using the first command, then reorganized contigs hierarchically based off these depth values with the second. These are two distinct commands submitted separately, but it makes more sense to list them like this for the purpose of explanation.
+```{bash}
+cat ../flye/bbd/assembly_info.txt  | grep -v '#' | awk '{OFS="\t";print $1,$3}' > depths_bbd.txt
+
+cat depths_bbd.txt | awk '{print $1}' | xargs samtools faidx ../flye/bbd/assembly.fasta > assembly_bbd_ordered.fasta
+```
+
+Now that the assembled contigs were present and organized, I ran metbat to begin binning them. I ended up with 68 bins assembled fro 38820740 bases. If you're using the same data set as I, you should get the same.
+```{bash}
+metabat2 -i assembly_bbd_ordered.fasta -a depths_bbd.txt --cvExt -o bins_bbd/metabat --seed 5
+```
 
 Binning of the assembled contigs into genomes with MetaBAT 2. Commands for this step were run in `metabat/`.
