@@ -17,9 +17,49 @@ knitr::opts_hooks$set(engine = function(options) {
 })
 ```
 
-<!--
-Explain what this step does and why, and copy each command you ran into a
-bash chunk. R chunks run from the top of the repository.
--->
+I began as always by moving to the appropriate directory folder.
+```{bash}
+cd ~/bbd-metagenome/prokka
+```
+
+I then reviewed the bins made back with checkm, and selected one to run prokka on using the following code.
+```{bash}
+cat ../checkm/bbd_topbins.txt
+```
+
+Arbitrarily, I chose metabat.67 for this initial run. The first line defines the bin that prokka will be run on, and the second line initiates the process and specifies the parameters to which it will be carried out.
+```{bash}
+bin=metabat.67
+prokka --cpus 2 --outdir $bin --prefix $bin  ../metabat/bins_bbd/${bin}.fa
+```
+
+I then looked at the contents of our output folder (also called metabat.67) using the classic ls command.
+```{bash}
+ls metabat.67
+```
+
+The most important file in this folder was metabat.67.tsv. tsv stands for "tab separated variables," and the variables those tabs were separating were the ones that would be relevant to the steps ahead. Having successfully tested prokka, it was time to run it on all of my bins. To do this I made another shell script using the same organization and nomenclature conventions as every other shell in this project. "run_prokka.sh" contained the following code.
+```{bash}
+#!/bin/bash
+#SBATCH --time=90
+#SBATCH --ntasks=2 --mem=2gb
+
+echo "Starting prokka in $(pwd) at $(date)"
+
+shopt -s expand_aliases
+alias prokka='apptainer run -B /pvol/:/pvol /pvol/data/sif/prokka.sif prokka'
+
+while read bin;do 
+  prokka --cpus 2 --outdir $bin --prefix $bin "../metabat/bins_bbd/${bin}.fa";
+done < ../checkm/bbd_topbins.txt
+
+echo "Finished prokka in $(pwd) at $(date)"
+```
+
+I submitted this task as I had submitted so many before it, with an sbatch command.
+```{bash}
+sbatch run_prokka.sh
+#Batch job 549
+```
 
 Gene prediction and annotation of the most complete bins with Prokka. Commands for this step were run in `prokka/`.
