@@ -17,9 +17,57 @@ knitr::opts_hooks$set(engine = function(options) {
 })
 ```
 
-<!--
-Explain what this step does and why, and copy each command you ran into a
-bash chunk. R chunks run from the top of the repository.
--->
+As always, the first step was navigating to the proper directory
+```{bash}
+cd ~/bbd-metagenome/gtdbtk
+```
+
+My next task was copying the bin files into the genome folder. I needed to build up a fairly expansive list of commands to accomplish this, starting with the following line of code to establish my loop.
+```{bash}
+while read bin;do echo $bin;done < ../checkm/bbd_topbins.txt
+```
+
+With this underlying framework set up, I established the paths the files should take to get to the desired folder with the following line.
+```{bash}
+while read bin;do echo "../metabat/bins_bbd/${bin}.fa";done < ../checkm/bbd_topbins.txt
+```
+
+
+Alright! Now that I had the necessary files identified and their paths charted, I finally copied them into the desired folder with this code.
+```{bash}
+while read bin;do cp "../metabat/bins_bbd/${bin}.fa" genomes;done < ../checkm/bbd_topbins.txt
+```
+
+I used good ole' ls to make sure that my copies had made it to genomes.
+```{bash}
+ls genomes
+```
+
+Having made sure everything was where it needed to be, I made a shell script and -following the established nomenclature- saved it as "run_gtdbtk.sh" to the gtdbtk directory. Within this shell I pasted the following code and saved the script.
+```{bash}
+#!/bin/bash
+#SBATCH --time=120
+#SBATCH --ntasks=2 --mem=56gb
+
+echo "Starting gtdbtk in $(pwd) at $(date)"
+
+shopt -s expand_aliases
+alias gtdbtk='apptainer run -B /pvol:/pvol,/pvol/data/mg/gtdbtkdata/release207_v2/:/refdata /pvol/data/sif/gtdbtk.sif'
+
+gtdbtk classify_wf -x fa --cpus 2 --genome_dir genomes --out_dir out --skip_ani_screen
+
+echo "Finished gtdbtk in $(pwd) at $(date)"
+```
+
+Because my shell script was saved, I was able to submit it at a request to our servers by running this code from the terminal.
+```{bash}
+sbatch run_gtdbtk.sh
+#batch job 536
+```
+
+To stay updated on its progress, I ran a tail script.
+```{bash}
+tail -f slurm-536.out
+```
 
 Taxonomic classification of the most complete bins with GTDB-Tk. Commands for this step were run in `gtdbtk/`.
