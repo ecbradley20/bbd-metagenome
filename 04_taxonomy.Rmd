@@ -70,4 +70,14 @@ To stay updated on its progress, I ran a tail script.
 tail -f slurm-536.out
 ```
 
+Once that job finished, I checked the contents of my output folder with a list command.
+```{bash}
+ls -l out/gtdbtk.bac120.summary.tsv
+```
+
+The gitignore file included in the framework I was provided with ensured that git would... ignore - everything in my out folders. I therefore copied my most important output, the tsv file, back up into the gtdbtk directory with this code.
+```{bash}
+cp out/gtdbtk.bac120.summary.tsv .
+```
+
 Taxonomic classification of the most complete bins with GTDB-Tk. Commands for this step were run in `gtdbtk/`.
