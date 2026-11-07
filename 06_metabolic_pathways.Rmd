@@ -17,9 +17,99 @@ knitr::opts_hooks$set(engine = function(options) {
 })
 ```
 
-<!--
-Explain what this step does and why, and copy each command you ran into a
-bash chunk. R chunks run from the top of the repository.
--->
+I moved to the final directory with the following code.
+```{bash}
+cd ~/bbd-metagenome/minpath
+```
+
+Minpath inputs map to each bin through the .tsv files we made with prokka (told you they'd be important). I once again turned to my reliable labrat metabat.67 to familiarize myself with the proccess on one bin before running it on all of my bins.
+```{bash}
+head ../prokka/metabat.67/metabat.67.tsv
+```
+
+Minpath output a lot of potentially useful information, but for my purposes I really only needed the information in the first and five columns (hence {print $1,$5}), the locus tag and the Enzyme Commission number. Within this line, "-F '\t'" is vital for the manipulation of a tsv, as that snippet communicated that the variables were tab separated.
+```{bash}
+head ../prokka/metabat.67/metabat.67.tsv | awk -F '\t' '{print $1,$5}'
+```
+
+Adding "$5" in front of print command filtered the output to only include entries with a value in the 5th column (in this case EC number, which all my entries had anyway)
+```{bash}
+head ../prokka/metabat.67/metabat.67.tsv | awk -F '\t' '$5{print $1,$5}'
+```
+
+Interestingly, this didn't print any result, so I conferred with my instructor. As it would be, good ole' metabat.67 had few enough information gaps that I didn't actually need to further transform and whittle away at its tsv, and so I skipped a few lines of code, jumping strait into the cat commands. This next line printed out a much more comprehensive version of the outputs, accounting for all of the genes rather than merely the top ten.
+```{bash}
+cat ../prokka/metabat.67/metabat.67.tsv | awk -F '\t' '$5{OFS="\t";print $1,$5}' | grep -v '^locus'
+```
+
+Seeing that the printed tsv was all in order, I amended the above code to send these results into their own distinct file within the minpath folder.
+```{bash}
+cat ../prokka/metabat.67/metabat.67.tsv | awk -F '\t' '$5{OFS="\t";print $1,$5}' | grep -v '^locus' > metabat.67.ec
+```
+
+The following code allowed me to run minpath on this new ".ec" file.
+```{bash}
+minpath -ec metabat.67.ec -report metabat.67.ec.report -details metabat.67.ec.details
+```
+
+The terminal was thus filled with an absolute deluge of information, breakdowns of all 1329 pathways. So great a volume it was that I could not scroll up far enough to see the upper rows of results. To survey a more manageable selection, I ran the following line to view the top few lines. Within the Terminal pane, I could discern the six important parts of the output. PWY-#### signified each pathway with a unique serial number, for example.
+```{bash}
+head metabat.67.ec.report 
+```
+
+While all of this was transpiring, my Prokka request from a previous step completed. With Prokka having set my stage, twas a simple matter of running this bit of code to prepare MinPath for all my bins.
+```{bash}
+while read bin;do 
+  cat ../prokka/$bin/${bin}.tsv | awk -F '\t' '$5{printf("%s\t%s\n", $1,$5)}' | grep -v '^locus' > ${bin}.ec 
+done < ../checkm/bbd_topbins.txt
+```
+
+Now that my pathways had been mapped, I ran MinPath on all of my bins with a single block of code.
+```{bash}
+while read bin;do 
+  minpath -ec ${bin}.ec -report ${bin}.ec.report -details ${bin}.ec.details
+done < ../checkm/bbd_topbins.txt
+```
+
+To parse through the high volume of data, I sorted it into two categories. This is a section about metabolic pathways, so I divided the bins by those that contain the architecture for two different metabolic processes. First, I isolated those with the architecture for photosynthesis using the following code.
+```{bash}
+grep 'PWY-101' *.ec.report
+```
+
+# Question 4.1
+How many bins contain at least one gene from this pathway?
+- Four bins, contig_138, metbat.21, metbat.32, and metbat.59 contained at least one gene from the photosynthetic pathway.
+Which bin has all of the genes (ie a complete pathway)?
+- fam0 designated the number of genes comprising the pathway, which in this case was 4. fam-found then indicated the number of genes from this pathway found in each bin. The bin metabat.59 was the only one in which all 4 genes were found.
+For which bins does minpath keep the pathway (minpath 1)?
+- Minpath kept the pathway in metbat.21 and metbat.59
+
+I cross-referenced my results with the gtdbtk outputs to check the taxonomy of my four results using the following code (each line ran individually)
+```{bash}
+grep 'contig_138' ../gtdbtk/gtdbtk.bac120.summary.tsv
+grep 'metabat.21' ../gtdbtk/gtdbtk.bac120.summary.tsv
+grep 'metabat.32' ../gtdbtk/gtdbtk.bac120.summary.tsv
+grep 'metabat.59' ../gtdbtk/gtdbtk.bac120.summary.tsv
+```
+
+The second metabolic pathway I looked into was identified by its reduction of sulfite into hydrogen sulfide. To achieved this I used a modified version of my earlier code, substituting the metacyc code for photosynthesis ("PWY-101") for "PWY-5360."
+```{bash}
+grep 'PWY-5360' *.ec.report
+```
+
+Then, I used the following line to cross reference the taxonomy of my only bin.
+```{bash}
+grep 'metabat.67' ../gtdbtk/gtdbtk.bac120.summary.tsv
+```
+
+# Question 4.2
+How many bins contain the pathway PWY-5360?
+- I only got a single bin containing this pathway, my old friend metabat.67.
+What order (in a taxonomic sense) do these bins belong to? Are they in the same family?
+- All one of my bins belonged to order Campylobacterales.
+How strong is the evidence that these bins really have this pathway? Look at the fam-found and minpath columns.
+- Looking at the "fam" entries, only one out of three genes were found, and 33% is rarely sufficient evidence for much of anything. Minpath is in agreement, displaying a 0 instead of a 1.
+
+With all of my code run, and all of my assignment questions answered, I was thus finished.
 
 Metabolic pathways inferred from the Prokka annotations with MinPath. Commands for this step were run in `minpath/`.
